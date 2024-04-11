@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  apache:
+    image: ubuntuapache:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nextcloud:/var/www/nextcloud/data
+      - ./nextcloudapacheconfig:/var/www/nextcloud/config
+    #volumes:
+    #  - ./apache:/usr/local/apache2/htdocs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    links:
+      - mysql
+    networks:
+      - mynetwork
+
+  mysql:
+    image: ubuntumariadb:latest
+    environment:
+      #MYSQL_ROOT_PASSWORD: example_password
+      #MYSQL_DATABASE: example_database
+      MYSQL_USER: nextcloud 
+      MYSQL_PASSWORD: passw@rd
+    command: ["sh", "-c", "/entrypoint.sh && tail -f /dev/null"]
+
+    healthcheck:
+      test: mysql -D nextcloud
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+
+volumes:
+  mysql_data:
+
